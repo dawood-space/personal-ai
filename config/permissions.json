@@ -1,0 +1,30 @@
+{
+    "SAFE": [
+        "read_file",
+        "list_files",
+        "search_files",
+        "analyze_code",
+        "git_status",
+        "git_diff",
+        "run_tests",
+        "run_build",
+        "python_version"
+    ],
+    "ASK_FIRST": [
+        "create_file",
+        "edit_file",
+        "delete_file",
+        "install_package",
+        "git_commit",
+        "git_create_branch",
+        "run_project_command"
+    ],
+    "ALWAYS_ASK": [
+        "git_push",
+        "deploy",
+        "delete_repository",
+        "access_outside_workspace",
+        "change_system_settings",
+        "dangerous_command"
+    ]
+}
