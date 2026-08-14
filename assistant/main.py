@@ -1,31 +1,42 @@
-from tools.git_tools import git_status, git_diff, git_commit
+from ai_brain import AIBrain
 
 
-print("Personal AI Git Commit Test")
-print("---------------------------")
+print("===================================")
+print("      PERSONAL AI DEVELOPER")
+print("===================================")
+print()
+
+print("Connecting to Gemini...")
+
+brain = AIBrain()
+
+print("Gemini connected successfully.")
+print()
+print("Type 'exit' to close Personal AI.")
+print()
 
 
-print("\nCurrent Git Status:")
-print("-------------------")
+while True:
+    message = input("You: ")
 
-print(git_status())
+    if message.lower() == "exit":
+        print()
+        print("Personal AI shutting down.")
+        break
 
+    if not message.strip():
+        continue
 
-print("\nCurrent Git Changes:")
-print("--------------------")
+    try:
+        answer = brain.ask(message)
 
-print(git_diff())
+        print()
+        print("Personal AI:")
+        print(answer)
+        print()
 
-
-print("\nRequesting permission to create a commit...")
-print("---------------------------------------------")
-
-result = git_commit(
-    "Initial Personal AI security system"
-)
-
-
-print("\nCommit Result:")
-print("--------------")
-
-print(result)
+    except Exception as error:
+        print()
+        print("Personal AI encountered an error:")
+        print(error)
+        print()
