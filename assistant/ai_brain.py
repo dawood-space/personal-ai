@@ -209,114 +209,97 @@ class AIBrain:
     # ASK GEMINI
     # ==========================================
 
+   
+
+
     def ask(self, user_message):
-        """Send a message to Gemini and handle tools."""
+        """Send a message to Gemini and safely handle tool requests."""
 
-        # --------------------------------
-        # SEND USER MESSAGE
-        # --------------------------------
-
-        response = self.chat.send_message(
-            user_message
-        )
-
-        # --------------------------------
-        # NORMAL TEXT RESPONSE
-        # --------------------------------
-
-        if not response.function_calls:
-            return response.text
-
-        # --------------------------------
-        # GET FIRST TOOL CALL
-        # --------------------------------
-
-        function_call = response.function_calls[0]
-
-        name = function_call.name
-        args = function_call.args
-
-        # --------------------------------
-        # READ FILE
-        # --------------------------------
-
-        if name == "read_file":
-
-            filename = args.get(
-                "filename"
+        try:
+            response = self.chat.send_message(
+                user_message
             )
 
-            result = read_file(
-                filename
+            if not response.function_calls:
+                return response.text
+
+            function_call = response.function_calls[0]
+
+            name = function_call.name
+            args = function_call.args
+
+            if name == "read_file":
+
+                filename = args.get("filename")
+
+                result = read_file(
+                    filename
+                )
+
+            elif name == "edit_file":
+
+                filename = args.get("filename")
+                new_content = args.get("new_content")
+
+                result = edit_file(
+                    filename,
+                    new_content
+                )
+
+            elif name == "run_command":
+
+                command = args.get("command")
+
+                working_folder = args.get(
+                    "working_folder",
+                    "."
+                )
+
+                result = run_command(
+                    command,
+                    working_folder
+                )
+
+            else:
+                return (
+                    "ERROR: Unknown tool requested: "
+                    + str(name)
+                )
+
+            tool_response = (
+                types.Part.from_function_response(
+                    name=name,
+                    response={
+                        "result": result
+                    },
+                )
             )
 
-        # --------------------------------
-        # EDIT FILE
-        # --------------------------------
-
-        elif name == "edit_file":
-
-            filename = args.get(
-                "filename"
+            final_response = (
+                self.chat.send_message(
+                    tool_response
+                )
             )
 
-            new_content = args.get(
-                "new_content"
-            )
+            return final_response.text
 
-            result = edit_file(
-                filename,
-                new_content
-            )
+        except Exception as error:
 
-        # --------------------------------
-        # RUN TERMINAL COMMAND
-        # --------------------------------
+            error_text = str(error)
 
-        elif name == "run_command":
-
-            command = args.get(
-                "command"
-            )
-
-            working_folder = args.get(
-                "working_folder",
-                "."
-            )
-
-            result = run_command(
-                command,
-                working_folder
-            )
-
-        # --------------------------------
-        # UNKNOWN TOOL
-        # --------------------------------
-
-        else:
+            if (
+                "429" in error_text
+                or "RESOURCE_EXHAUSTED" in error_text
+                or "quota" in error_text.lower()
+            ):
+                return (
+                    "⚠️ Gemini API quota is temporarily exhausted.\n\n"
+                    "Personal AI is still working, but Gemini "
+                    "cannot process another request right now.\n\n"
+                    "Please wait for the quota to reset and try again."
+                )
 
             return (
-                "ERROR: Unknown tool requested: "
-                + str(name)
-            )
-
-        # --------------------------------
-        # SEND TOOL RESULT BACK TO GEMINI
-        # --------------------------------
-
-        tool_response = (
-            types.Part.from_function_response(
-                name=name,
-                response={
-                    "result": result
-                },
-            )
-        )
-
-        final_response = (
-            self.chat.send_message(
-                tool_response
-            )
-        )
-
-        return final_response.text
+                "⚠️ Personal AI encountered an error.\n\n"
+                + error_text
+            )   
